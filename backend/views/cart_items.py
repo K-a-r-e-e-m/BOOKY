@@ -65,11 +65,14 @@ def add_cart_item():
     return jsonify({'message': 'Item added successfully','new_cart_item_id': new_cart_item.id ,'cart_item': new_cart_item.to_dict()}), 201
 
 
-@cart_items.route('/api/delete_cart_item/<string:item_id>', methods=['DELETE'])
-def delete_cart_item(item_id):
+@cart_items.route('/api/delete_cart_item', methods=['DELETE'])
+def delete_cart_item():
     if 'user_id' not in session:
         return jsonify({'message': 'User not logged in'}), 401
-    cart_item_id = CartItems.query.get(item_id)
+    data = request.get_json()
+    print(data)
+    cart_item_id = CartItems.query.get(data['cartItemId'])
+    print(cart_item_id)
     if not cart_item_id:
         return jsonify({'message': 'Cart item not found'}), 404
     if cart_item_id:
@@ -89,7 +92,7 @@ def delete_all_cart_items():
         db.session.delete(item)
     db.session.commit()
     return jsonify({'message': 'All items deleted successfully'}), 200
-
+print
 @cart_items.route('/api/edit_cart_item/<string:item_id>', methods=['PUT'])
 def update_cart_item(item_id):
     if 'user_id' not in session:

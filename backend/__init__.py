@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS, cross_origin
 from flask_session import Session
 from os import path
-import redis
+# import redis
 
 db = SQLAlchemy()
 DB_NAME = 'database.db'

@@ -26,6 +26,8 @@ function SignupPage() {
       navigate("/login");
     },
   });
+ 
+   
 
   function validateForm(data) {
     let formErrors = {};
@@ -149,7 +151,7 @@ function SignupPage() {
             </button>
           </div>
           {isError && (
-            <div className="error">Signup failed: {error.message}</div>
+            <div className="error">{error.message}</div>
           )}
         </form>
         <Link

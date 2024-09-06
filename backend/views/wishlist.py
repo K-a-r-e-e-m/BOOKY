@@ -24,38 +24,40 @@ def wishlist_add():
         return jsonify({'error': 'Unauthorized'}), 401
 
     data = request.get_json()
+    print(data)
     book_id = data.get('productId')
     if not book_id:
-        return jsonify({'error': 'Book id is required'}), 400
-    
+        return jsonify({'error': 'prodcut id is required'}), 400
+
     item = Wishlist.query.filter_by(user_id=user_id, book_id=book_id).first()
     if item:
         return jsonify({'message': 'Book is already in wishlist'}), 200
-    
+
     new_item = Wishlist(user_id=user_id, book_id=book_id)
     db.session.add(new_item)
     db.session.commit()
 
-    return jsonify({'message': 'Book added to wishlist'}), 201
+    return jsonify({
+        'message': 'Book added to wishlist',
+        'new_wishlist_item_id': new_item.id,
+        'wishlist_item': new_item.to_dict()
+        }), 201
 
 
 @wishlist.route('/wishlist/remove', methods=['DELETE'])
 def wishlist_remove():
-    if 'user_id' not in session:
-        return jsonify({'error': 'not login'}), 401
     user_id = session.get('user_id')
     if not user_id:
         return jsonify({'error': 'Unauthorized'}), 401
 
     data = request.get_json()
-    book_id = data.get('productId')
-    if not book_id:
+    print(data)
+    # book_id = data.get('wishlistId')
+    if not data:
         return jsonify({'error': 'Book id is required'}), 400
 
-    item = Wishlist.query.filter_by(user_id=user_id, book_id=book_id).first()
-    if item:
-        db.session.delete(item)
-        db.session.commit()
-        return jsonify({'message': 'Book removed from wishlist'}), 200
+    item = Wishlist.query.get(data['wishlistId'])
+    db.session.delete(item)
+    db.session.commit()
 
-    return jsonify({'error': 'Book not found in wishlist'}), 404
+    return jsonify({'message': 'Book removed from wishlist'}), 200
