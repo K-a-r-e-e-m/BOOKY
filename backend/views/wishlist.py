@@ -8,14 +8,19 @@ wishlist = Blueprint('wishlist', __name__)
 
 @wishlist.route('/wishlist', methods=['GET'])
 def get_wishlist():
-    user_id = session.get('user_id')
+    # user_id = session.get('user_id')
+    user_id = request.args.get('user_id')
+    print(user_id)
     if not user_id:
         return jsonify({'error': 'Unauthorized'}), 401
 
     wishlist_items = Wishlist.query.filter_by(user_id=user_id).all()
-    wishlist = [{'book_id': item.book_id} for item in wishlist_items]
-
-    return jsonify({'wishlist': wishlist}), 200
+    if wishlist_items:
+        wishlist = [item.to_dict() for item in wishlist_items]  # Assuming Wishlist model has a `to_dict` method
+        print(wishlist)
+        return jsonify(wishlist), 200
+    else:
+        return jsonify([]), 200 
 
 @wishlist.route('/wishlist/add', methods=['POST'])
 def wishlist_add():

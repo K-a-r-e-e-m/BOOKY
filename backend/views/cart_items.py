@@ -8,16 +8,22 @@ from backend.models.cart import Cart
 cart_items = Blueprint('cart_items', __name__)
 
 
+from flask import request, jsonify
+
 @cart_items.route('/api/cart_items', methods=['GET'])
 def get_cart_items():
-    if 'user_id' not in session:
-        return jsonify({'message': 'User not logged in'}), 401
-    user_id = session.get('user_id')
+    user_id = request.args.get('user_id')  # Accept user_id from the query params
+    print(f"User ID: {user_id}")
+    if not user_id:
+        return jsonify({'message': 'User ID not provided'}), 400
+
     cart_items = CartItems.query.filter_by(user_id=user_id).all()
+    
     if cart_items:
         return jsonify([cart.to_dict() for cart in cart_items]), 200
     else:
-        return jsonify({'message': 'No items in cart'}), 404
+        return jsonify([]), 200  # Return empty list with 200 OK
+
 
 
 # @cart_items.route('/api/cart_items/<string:item_id>', methods=['GET'])
