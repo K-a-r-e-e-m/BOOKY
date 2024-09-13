@@ -7,6 +7,8 @@ import { addItem, removeItem } from '../../store/wishlistSlice';
 import { addRemoveCart, addRemoveWishlist } from '../../util/http';
 
 function BookCard({ imgSrc, title, discountPrice, originalPrice, rating, shopId, shopDes }) {
+    const [wishlistId, setWishlistId] = useState(null);
+    const [cartItemId, setCartItemId] = useState(null);
     const navigate = useNavigate();
     const dispatch = useDispatch();
     // console.log('shopId:', shopId);
@@ -15,14 +17,12 @@ function BookCard({ imgSrc, title, discountPrice, originalPrice, rating, shopId,
     const [inCart, setInCart] = useState(false);
     const [inWishlist, setInWishlist] = useState(false);
 
-    const cartItems = useSelector((state) => state.cart.items);
-    const wishlistItems = useSelector((state) => state.wishlist.items);
+      // Select items from Redux store
+      const cartItems = useSelector((state) => state.cart.items);
+      const wishlistItems = useSelector((state) => state.wishlist.items);
+        
 
-    // Check if the item is already in the cart or wishlist
-    useEffect(() => {
-        setInCart(cartItems.some(item => item.id === shopId));
-        setInWishlist(wishlistItems.some(item => item.id === shopId));
-    }, [cartItems, wishlistItems, shopId]);
+  
 
     const product = {
         shopId,
@@ -32,6 +32,7 @@ function BookCard({ imgSrc, title, discountPrice, originalPrice, rating, shopId,
         originalPrice: parseFloat(originalPrice),
         rating,
         description: shopDes,
+        
     };
 
     // Mutation for adding/removing from the cart
@@ -41,15 +42,20 @@ function BookCard({ imgSrc, title, discountPrice, originalPrice, rating, shopId,
         addRemoveCart({ action, productId, quantity, cartItemId }),
         onSuccess: (response) => {
             console.log('Success response:', response); // Add this line
+            setCartItemId(response.new_cart_item_id);
 
-            if (response.cartItemId) {
-                dispatch(addItemToCart({ ...product, cartItemId: response.cartItemId }));
+            if (response && response.new_cart_item_id ) {
+                console.log('allllll', response);
+                setInCart(true);    
+                dispatch(addItemToCart({ ...product, id: shopId}));
                 alert('Item added to cart');
-                setInCart(true);
+                
             } else {
+                setInCart(false);
+                console.log('shopId:', shopId);
                 dispatch(removeItemFromCart(shopId));
                 alert('Item removed from cart');
-                setInCart(false);
+               
             }
         },
         onError: (error) => {
@@ -62,13 +68,16 @@ function BookCard({ imgSrc, title, discountPrice, originalPrice, rating, shopId,
     const wishlistMutation = useMutation({
         mutationFn: ({ action, productId, wishlistId }) =>
             addRemoveWishlist({ action, productId, wishlistId }),
-        onSuccess: (response) => {
-            if (response.wishlistId) {
-                dispatch(addItem({ ...product, wishlistId: response.wishlistId }));
+        onSuccess: (data) => {
+            console.log('Success response:', data); // Add this line
+            if (data && data.new_wishlist_item_id) {
+                setWishlistId(data.new_wishlist_item_id);
+                console.log(data.new_wishlist_item_id)
+                dispatch(addItem({ ...product, id: shopId }));
                 alert('Item added to wishlist');
                 setInWishlist(true);
             } else {
-                dispatch(removeItem(product.shopId));
+                dispatch(removeItem(shopId));
                 alert('Item removed from wishlist');
                 setInWishlist(false);
             }
@@ -81,8 +90,8 @@ function BookCard({ imgSrc, title, discountPrice, originalPrice, rating, shopId,
 
     function handleAddToCart() {
         if (inCart) {
-            console.log('cartItemId:', product.cartItemId);
-            cartMutation.mutate({ action: 'remove', cartItemId: product.cartItemId });
+            console.log('cartItemId:re;ovvvvvvvvvv', cartItemId);
+            cartMutation.mutate({ action: 'remove', cartItemId: cartItemId });
         } else {
             
             cartMutation.mutate({ action: 'add', productId: product.shopId, quantity: 1 });
@@ -92,7 +101,8 @@ function BookCard({ imgSrc, title, discountPrice, originalPrice, rating, shopId,
 
     function handleAddToWishList() {
         if (inWishlist) {
-            wishlistMutation.mutate({ action: 'remove', wishlistId: product.wishlistId });
+            console.log(wishlistId)
+            wishlistMutation.mutate({ action: 'remove', wishlistId});
         } else {
              
             wishlistMutation.mutate({ action: 'add', productId: product.shopId });
@@ -147,3 +157,5 @@ function BookCard({ imgSrc, title, discountPrice, originalPrice, rating, shopId,
 }
 
 export default BookCard;
+
+ 

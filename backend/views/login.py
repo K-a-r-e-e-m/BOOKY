@@ -23,7 +23,7 @@ def login_view():
         print(session)
 
         print(f"Session after login: {session}")
-        response = jsonify({'message': 'Login successful!'})
+        response = jsonify({'message': 'Login successful!', 'user_id': user.id})
         response.set_cookie('session', 'your_session_id', samesite='None', secure=True)
         return response, 200
     else:

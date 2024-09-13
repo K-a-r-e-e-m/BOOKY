@@ -12,9 +12,11 @@ export async function NewUser({ name, email, password }) {
       body: JSON.stringify({ name, email, password }),
       credentials: 'include'  // Ensure cookies are included in requests
     });
+    console.log('response:', response.error);
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const responseData = await response.json();
+      throw new Error(responseData.error || 'Unknown error');
     }
 
     const data = await response.json();
@@ -26,7 +28,7 @@ export async function NewUser({ name, email, password }) {
   }
 }
 
-export async function fetchUsers(data) { 
+export async function fetchUsers(data) {
   try {
     const response = await fetch('http://127.0.0.1:5000/login', {
       method: 'POST',
@@ -41,8 +43,17 @@ export async function fetchUsers(data) {
       const responseData = await response.json();
       throw new Error(responseData.error || 'Unknown error');
     }
+    
+    const responseData = await response.json();
+    
+    // Store user_id in local storage
+    if (responseData.user_id) {
+      localStorage.setItem('user_id', responseData.user_id);
+    }
+    
+    // Return the relevant data (excluding user_id if needed)
+    return responseData;
 
-    return await response.json();
   } catch (error) {
     console.error('Error:', error.message);
     throw error;
@@ -69,41 +80,46 @@ export async function fetchBooks() {
     throw new Error(`Failed to fetch books. ${error.message}`);
   }
 }
-
 export async function addRemoveCart({ action, productId, quantity, cartItemId }) {
-  const url = action === 'add'
-    ? 'http://127.0.0.1:5000/api/add_cart_item'
-    : 'http://127.0.0.1:5000/api/delete_cart_item/';
+  const isAddAction = action === 'add';
+  const url = isAddAction 
+    ? 'http://127.0.0.1:5000/api/add_cart_item' 
+    : `http://127.0.0.1:5000/api/delete_cart_item`;
 
   const options = {
-    method: action === 'add' ? 'POST' : 'DELETE',
+    method: isAddAction ? 'POST' : 'DELETE',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     },
-    credentials: 'include',  // Ensure cookies are included in requests
-    body: JSON.stringify(action === 'add' ? { productId, quantity } : { cartItemId })
+    credentials: 'include',
+    body: isAddAction ? JSON.stringify({ productId, quantity }): JSON.stringify({ cartItemId })
   };
 
   try {
+    console.log('options:', options);
+    console.log('url:', url);
     const response = await fetch(url, options);
-
+    console.log('response:', response);
+    
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
 
-    if (action === 'add') {
+    if (isAddAction) {
       console.log('Item added to cart:', data);
-      return data.cartItemId;  // Return the cart item ID after adding to the cart
+      return data; // Return the response data after adding to the cart
     } else {
-      return 'Item removed from cart successfully';  // Return a success message after removing from the cart
+      console.log('Item removed from cart:', data);
+      return 'Item removed from cart successfully';
     }
   } catch (error) {
-    console.error('Error in addRemoveCart:', error);
+    console.error('Error in addRemoveCart:', error.message || 'Something went wrong');
     throw new Error(error.message || 'Something went wrong');
   }
 }
+
 
 export async function addRemoveWishlist({ action, productId, wishlistId }) {
   const url = action === 'add'
@@ -127,10 +143,11 @@ export async function addRemoveWishlist({ action, productId, wishlistId }) {
     }
 
     const data = await response.json();
+    console.log('data:', data);
 
     if (action === 'add') {
       console.log('Item added to wishlist:', data);
-      return data.wishlistId;  // Return the wishlist item ID after adding to the wishlist
+      return data;  // Return the wishlist item ID after adding to the wishlist
     } else {
       return 'Item removed from wishlist successfully';  // Return a success message after removing from the wishlist
     }
@@ -174,5 +191,39 @@ export async function submitCheckout(formData, cartItems) {
   } catch (error) {
     console.error('Error during checkout:', error);
     throw new Error(error.message || 'Something went wrong during checkout');
+  }
+}
+
+export async function fetchCarts() {
+  const data = await fetch('http://127.0.0.1:5000/api/cart_items');
+
+  if (!data.ok) {
+    throw new Error(`HTTP error! feth cart status: ${data.status}`);
+  }
+  return  data.json();
+}
+
+export async function fetchWishList() {
+  const data = await fetch('http://127.0.0.1:5000/wishlist');
+  if (!data.ok) {
+    throw new Error(`HTTP error! feth cart status: ${data.status}`);
+  }
+  return  data.json();
+}
+
+
+
+export async function logoutUser() {
+  const response = await fetch('http://127.0.0.1:5000/logout', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include', // Ensure cookies are sent with the request
+  });
+  console.log("log status--->" ,response.status)
+
+  if (!response.ok) {
+    throw new Error('Logout failed');
   }
 }
